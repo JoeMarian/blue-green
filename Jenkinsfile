@@ -33,27 +33,30 @@ pipeline {
         stage('Deploy Blue-Green') {
             steps {
                 script {
+                    // Detect which container is running
                     def BLUE = sh(script: "docker ps -q -f name=blue", returnStdout: true).trim()
                     def GREEN = sh(script: "docker ps -q -f name=green", returnStdout: true).trim()
 
                     if (BLUE) {
                         echo "Blue is active. Deploying Green..."
                         sh """
-                        docker stop green || true
-                        docker rm green || true
-                        docker run -d -p $GREEN_PORT:3000 -e APP_COLOR=green --name green $DOCKERHUB_USER/$IMAGE_NAME:latest
+                            docker stop green || true
+                            docker rm green || true
+                            docker run -d -p $GREEN_PORT:3000 -e APP_COLOR=green --name green $DOCKERHUB_USER/$IMAGE_NAME:latest
+                            docker stop blue || true
+                            docker rm blue || true
                         """
-                        echo "Switching traffic to GREEN environment"
-                        sh 'docker stop blue && docker rm blue'
+                        echo "Switched traffic to GREEN environment"
                     } else {
                         echo "Green is active or nothing running. Deploying Blue..."
                         sh """
-                        docker stop blue || true
-                        docker rm blue || true
-                        docker run -d -p $BLUE_PORT:3000 -e APP_COLOR=blue --name blue $DOCKERHUB_USER/$IMAGE_NAME:latest
+                            docker stop blue || true
+                            docker rm blue || true
+                            docker run -d -p $BLUE_PORT:3000 -e APP_COLOR=blue --name blue $DOCKERHUB_USER/$IMAGE_NAME:latest
+                            docker stop green || true
+                            docker rm green || true
                         """
-                        echo "Switching traffic to BLUE environment"
-                        sh 'docker stop green && docker rm green || true'
+                        echo "Switched traffic to BLUE environment"
                     }
                 }
             }
