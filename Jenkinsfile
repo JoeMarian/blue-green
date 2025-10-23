@@ -13,7 +13,6 @@ pipeline {
             }
         }
 
-
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest .'
@@ -43,7 +42,10 @@ pipeline {
                         docker run -d -p 8082:3000 -e APP_COLOR=green --name green $DOCKERHUB_USER/$IMAGE_NAME:latest
                         '''
                         echo "Switch traffic to GREEN environment"
-                        sh 'docker stop blue && docker rm blue'
+                        sh '''
+                        docker stop blue || true
+                        docker rm blue || true
+                        '''
                     } else {
                         echo "Green is active. Deploying Blue..."
                         sh '''
@@ -52,7 +54,10 @@ pipeline {
                         docker run -d -p 8081:3000 -e APP_COLOR=blue --name blue $DOCKERHUB_USER/$IMAGE_NAME:latest
                         '''
                         echo "Switch traffic to BLUE environment"
-                        sh 'docker stop green && docker rm green'
+                        sh '''
+                        docker stop green || true
+                        docker rm green || true
+                        '''
                     }
                 }
             }
