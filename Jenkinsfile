@@ -9,9 +9,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/JoeMarian/blue-green'
+                git branch: 'main', url: 'https://github.com/JoeMarian/blue-green.git'
             }
         }
+
 
         stage('Build Docker Image') {
             steps {
